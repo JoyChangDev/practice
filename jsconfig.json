@@ -1,7 +1,19 @@
 {
   "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "skipLibCheck": true,
     "paths": {
-      "@/*": ["./*"]
+      "@/actions/*": ["./app/_actions/*"],
+      "@/assets/*": ["./app/_assets/*"],
+      "@/components/*": ["./app/_components/*", "./components/*"],
+      "@/contexts/*": ["./app/_contexts/*"],
+      "@/chakra/*": ["./components/ui/*"],
+      "@/hooks/*": ["./app/_hooks/*"],
+      "@/lib/*": ["./app/_lib/*"],
+      "@/schemas/*": ["./app/_schemas/*"],
+      "@/store/*": ["./app/_store/*"]
     }
   }
 }
