@@ -1,4 +1,5 @@
 import { ChakraProvider } from "@/components/config";
+import { Box } from "@chakra-ui/react";
 
 export const metadata = {
   title: "Create Next App",
@@ -9,7 +10,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
-        <ChakraProvider>{children}</ChakraProvider>
+        <ChakraProvider>
+          <Box m="20px">{children}</Box>
+        </ChakraProvider>
       </body>
     </html>
   );
