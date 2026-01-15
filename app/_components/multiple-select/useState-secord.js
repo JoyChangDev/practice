@@ -8,33 +8,29 @@ import Checkbox from "@/components/form/checkbox";
 export default function UseStateSecond({ initialValues }) {
   const [values, setValues] = useState(initialValues);
 
-  const allChecked =
-    values.every((v) => v.checked) ||
-    values.every((v) => !v.checked);
+  const allChecked = values.every((v) => v.checked);
+  const noneChecked = values.every((v) => !v.checked);
+
+  useEffect(() => {
+    if (allChecked || noneChecked) {
+      queueMicrotask(() => {
+        setValues((current) => current.map((v) => ({ ...v, checked: false })));
+      });
+    }
+  }, [allChecked, noneChecked]);
 
   const handleChecked = (index, nextChecked) => {
     setValues((current) => {
-      const newValues = current.map((v, i) =>
+      return current.map((v, i) =>
         i === index ? { ...v, checked: !!nextChecked } : v
       );
-
-      const allCheck = newValues.every((v) => v.checked);
-      const noneCheck = newValues.every((v) => !v.checked);
-
-      if (allCheck || noneCheck) {
-        return newValues.map((v) => {
-          return { ...v, checked: false };
-        });
-      }
-
-      return newValues;
     });
   };
 
   return (
     <Flex gap="20px">
       <Checkbox
-        value={allChecked}
+        value={allChecked || noneChecked}
         label="Weekdays"
         variant="subtle"
         colorPalette="purple"
