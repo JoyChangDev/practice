@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import { Flex } from '@chakra-ui/react';
-import { useState } from 'react';
+import { Flex } from "@chakra-ui/react";
+import { useState } from "react";
 
-import Checkbox from '@/components/form/checkbox';
+import Checkbox from "@/components/form/checkbox";
 
 export default function UseState({ initialValues }) {
   const [values, setValues] = useState(initialValues);
@@ -44,9 +44,7 @@ export default function UseState({ initialValues }) {
           label={item.label}
           variant="subtle"
           colorPalette="blue"
-          onCheckedChange={(e) =>
-            handleChecked(index, e.checked)
-          }
+          onCheckedChange={(e) => handleChecked(index, e.checked)}
         />
       ))}
     </Flex>
