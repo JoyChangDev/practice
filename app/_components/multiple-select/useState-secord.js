@@ -13,9 +13,9 @@ export default function UseStateSecond({ initialValues }) {
 
   useEffect(() => {
     if (allChecked || noneChecked) {
-      queueMicrotask(() => {
+      setTimeout(() => {
         setValues((current) => current.map((v) => ({ ...v, checked: false })));
-      });
+      }, 100);
     }
   }, [allChecked, noneChecked]);
 
