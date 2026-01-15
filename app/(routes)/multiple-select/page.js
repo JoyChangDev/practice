@@ -8,7 +8,7 @@ import {
 } from "@chakra-ui/react";
 
 import UseState from "@/components/multiple-select/useState";
-import UseStateSecond from "@/components/multiple-select/useState-secord";
+import UseStateSecond from "@/components/multiple-select/useState-second";
 
 const initialValues = [
   { label: "Monday", value: "monday" },
