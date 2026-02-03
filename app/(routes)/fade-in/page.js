@@ -1,5 +1,5 @@
 import { Box, VStack } from "@chakra-ui/react";
-import LazySection from "@/components/fade-in/lazy-section";
+import ScrollReveal from "@/components/fade-in/scroll-reveal";
 
 const COLORS = [
   "red.300",
@@ -20,14 +20,14 @@ export default function Page() {
     <Box px="6" py="10">
       <VStack gap="20px" alignItems="center">
         {ITEMS.map((index) => (
-          <LazySection key={index}>
+          <ScrollReveal key={`reveal${index}`}>
             <Box
               boxSize="40px"
               bg={COLORS[index % COLORS.length]}
               borderRadius="md"
               boxShadow="md"
             />
-          </LazySection>
+          </ScrollReveal>
         ))}
       </VStack>
     </Box>
