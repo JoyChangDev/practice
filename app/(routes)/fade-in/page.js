@@ -1,6 +1,5 @@
-import { Box, VStack } from "@chakra-ui/react";
+import { Box, VStack, Center } from "@chakra-ui/react";
 import ScrollReveal from "@/components/fade-in/scroll-reveal";
-import { ScrollDirectionProvider } from "@/components/fade-in/scroll-direction";
 
 const COLORS = [
   "red.300",
@@ -18,21 +17,21 @@ const ITEMS = Array.from({ length: 100 }, (_, index) => index);
 
 export default function Page() {
   return (
-    <ScrollDirectionProvider>
-      <Box px="6" py="10">
-        <VStack gap="20px" alignItems="center">
-          {ITEMS.map((index) => (
-            <ScrollReveal key={`reveal${index}`}>
-              <Box
-                boxSize="40px"
-                bg={COLORS[index % COLORS.length]}
-                borderRadius="md"
-                boxShadow="md"
-              />
-            </ScrollReveal>
-          ))}
-        </VStack>
-      </Box>
-    </ScrollDirectionProvider>
+    <Box px="6" py="10">
+      <VStack gap="20px" alignItems="center">
+        {ITEMS.map((index) => (
+          <ScrollReveal key={`reveal${index}`}>
+            <Center
+              boxSize="40px"
+              bg={COLORS[index % COLORS.length]}
+              borderRadius="md"
+              boxShadow="md"
+            >
+              {index + 1}
+            </Center>
+          </ScrollReveal>
+        ))}
+      </VStack>
+    </Box>
   );
 }

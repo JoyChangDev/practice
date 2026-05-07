@@ -2,7 +2,6 @@
 import { Box } from "@chakra-ui/react";
 import { useCallback, useState } from "react";
 import { useInView } from "react-intersection-observer";
-import { useScrollDirection } from "./scroll-direction";
 
 const DEFAULT_OFFSET = 30;
 
@@ -12,18 +11,22 @@ export default function ScrollReveal({
   threshold = 0.4,
   triggerOnce = false,
 }) {
-  const isDown = useScrollDirection();
   const safeOffset = Number.isFinite(offset)
     ? Math.abs(offset)
     : DEFAULT_OFFSET;
   const [enterOffset, setEnterOffset] = useState(safeOffset);
 
   const handleInViewChange = useCallback(
-    (nextInView) => {
+    (nextInView, entry) => {
       if (nextInView) return;
-      setEnterOffset(isDown() ? safeOffset : -safeOffset);
+
+      const elementCenter =
+        entry.boundingClientRect.top + entry.boundingClientRect.height / 2;
+      const viewportCenter = window.innerHeight / 2;
+
+      setEnterOffset(elementCenter < viewportCenter ? -safeOffset : safeOffset);
     },
-    [isDown, safeOffset],
+    [safeOffset],
   );
 
   const { ref, inView } = useInView({
