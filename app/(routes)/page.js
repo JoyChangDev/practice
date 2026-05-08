@@ -14,6 +14,9 @@ export default function Home() {
       <Link href="/burger-animation">
         <Code colorPalette="cyan">burger-animation</Code>
       </Link>
+      <Link href="loading-modal">
+        <Code colorPalette="cyan">loading-modal</Code>
+      </Link>
     </Stack>
   );
 }
