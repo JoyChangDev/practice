@@ -1,7 +1,4 @@
 // Fade-in development notes (summary)
-// - 問題：useEffect 內同步 setState 警告
-//   原因：在 effect 本體直接改 state
-//   選擇：改用 useInView 的 onChange 回呼更新
 // - 問題：方向是否用 useState
 //   原因：scroll 更新太頻繁，會造成大量 re-render
 //   選擇：用 useRef 儲存方向，只有需要時讀取
@@ -42,9 +39,12 @@ export default function Note() {
       </Popover.Trigger>
       <Portal>
         <Popover.Positioner>
-          <Popover.Content w="600px">
-            <Popover.Body>
-              <ContentOne />
+          <Popover.Content w="600px" h="700px">
+            <Popover.Body overflow="auto">
+              <Box display="flex" flexDir="column" gap="16px">
+                <ContentOne />
+                <ContentTwo />
+              </Box>
             </Popover.Body>
           </Popover.Content>
         </Popover.Positioner>
@@ -92,7 +92,8 @@ const ContentOne = () => {
         </List.Item>
         <List.Item>
           <Text>
-            調整設定：<Code> opacity=&#123;inView ? 1 : 0&#125;</Code>
+            調整設定：
+            <Code> opacity=&#123;inView ? 1 : 0&#125;</Code>
           </Text>
         </List.Item>
         <List.Item>
@@ -104,6 +105,65 @@ const ContentOne = () => {
         <List.Item>
           調整說明：只在 DOM 離開可視範圍時更新 opacity，避免 inView 在臨界點因
           DOM 高度反覆渲染及移除，導致佈局高度不穩
+        </List.Item>
+      </List.Root>
+    </Box>
+  );
+};
+
+const ContentTwo = () => {
+  return (
+    <Box>
+      <Card.Root p="10px" gap="10px">
+        <Card.Header flexDir="row" p="0 20px" gap="5px">
+          ② <Bold>useInView=&#123;&#123; onChange &#125;&#125;</Bold>
+          <Small>避免在 useEffect 本體內直接同步更新 state</Small>
+        </Card.Header>
+        <Card.Body p="0 20px">
+          <Small>
+            <Code>useEffect</Code>
+            適合處理副作用，不適合在依賴變動後立刻反覆同步
+            <Code>setState</Code>
+          </Small>
+          <Small>
+            <Code>onChange</Code>
+            會在可視狀態改變時被觸發，能把更新集中在事件回呼中
+          </Small>
+        </Card.Body>
+      </Card.Root>
+      <List.Root lineHeight="2">
+        <List.Item>
+          <Text>
+            問題：原在 <Code>useEffect</Code> 內根據 <Code>inView</Code> 呼叫
+            <Code>setEnterOffset</Code>，用另一個 state 追著 inView 變化更新
+          </Text>
+        </List.Item>
+
+        <List.Item>
+          <Text>
+            原始設定：
+            <Code>useEffect(() =&gt; setEnterOffset(...), [inView])</Code>
+          </Text>
+        </List.Item>
+        <List.Item>
+          <Text>
+            調整設定：
+            <Code>
+              useInView(&#123; onChange: (inView, entry) =&gt;
+              setEnterOffset(...) &#125;)
+            </Code>
+          </Text>
+        </List.Item>
+        <List.Item>
+          <Text>
+            原因：effect 修改 state，state 更新會再次 render，
+            容易產生額外更新或警告
+          </Text>
+        </List.Item>
+        <List.Item>
+          調整說明： <Code>inView</Code> 監測元素進出視窗時觸發
+          <Code>onChange</Code> 時更新
+          <Code>enterOffset</Code> 避免用 effect 追著 inView 再更新方向 state
         </List.Item>
       </List.Root>
     </Box>
