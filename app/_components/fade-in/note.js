@@ -1,17 +1,4 @@
 // Fade-in development notes (summary)
-// - 問題：方向是否用 useState
-//   原因：scroll 更新太頻繁，會造成大量 re-render
-//   選擇：用 useRef 儲存方向，只有需要時讀取
-// - 問題：100 個元件各自監聽 scroll
-//   原因：每個元件各自 hook，效能差
-//   選擇：改成共享方向（Context），只建立一份監聽
-// - 問題：Context value 是否用 boolean
-//   原因：boolean 會在 scroll 時頻繁更新，造成所有訂閱元件 re-render
-//   選擇：Context 傳 isDown() 函式，避免高頻 re-render
-// - 問題：淡入方向用上一次離開時的 scroll direction，反向滾回時可能相反
-//   原因：離開方向不一定等於下一次進入畫面的方向
-//   選擇：改用 IntersectionObserverEntry 的元素位置判斷 offset，並移除 scroll direction Context
-
 import {
   Button,
   Popover,
@@ -39,11 +26,12 @@ export default function Note() {
       </Popover.Trigger>
       <Portal>
         <Popover.Positioner>
-          <Popover.Content w="600px" h="700px">
+          <Popover.Content w="600px" h="700px" p="10px">
             <Popover.Body overflow="auto">
               <Box display="flex" flexDir="column" gap="16px">
                 <ContentOne />
                 <ContentTwo />
+                <ContentThree />
               </Box>
             </Popover.Body>
           </Popover.Content>
@@ -164,6 +152,74 @@ const ContentTwo = () => {
           調整說明： <Code>inView</Code> 監測元素進出視窗時觸發
           <Code>onChange</Code> 時更新
           <Code>enterOffset</Code> 避免用 effect 追著 inView 再更新方向 state
+        </List.Item>
+      </List.Root>
+    </Box>
+  );
+};
+
+const ContentThree = () => {
+  return (
+    <Box>
+      <Card.Root p="10px" gap="10px">
+        <Card.Header flexDir="row" p="0 20px" gap="5px">
+          ③ <Bold>entry</Bold>
+          <Small>改用 IntersectionObserverEntry 判斷元素實際位置</Small>
+        </Card.Header>
+        <Card.Body p="0 20px">
+          <Small>
+            <Code>entry</Code>是 IntersectionObserver
+            回傳的觀察資料，可取得元素進出 viewport 時的狀態
+          </Small>
+          <Small>
+            其中 <Code>entry.boundingClientRect</Code>
+            提供元素相對於 viewport
+            的位置與尺寸，可用來計算目前元素在畫面上方或下方
+          </Small>
+        </Card.Body>
+      </Card.Root>
+      <List.Root lineHeight="2">
+        <List.Item>
+          <Text>
+            歷史設定：曾經建立共用監聽滾動方向的函式，避免大量元件各自監聽、浪費效能
+          </Text>
+        </List.Item>
+        <List.Item>
+          <Text>
+            歷史調整：Context 不直接傳 state 狀態，而是傳
+            <Code>isDown()</Code>
+            函式，讓元件只有在觸發時才讀取目前方向，減少滾動時的 re-render
+          </Text>
+        </List.Item>
+        <List.Item>
+          <Text>
+            問題：使用 <Code>isDown()</Code>
+            在觸發當下取得方向時，滑鼠上下快速滾動可能讓取得的方向和元素實際進入方向不同
+          </Text>
+        </List.Item>
+        <List.Item>
+          <Text>
+            原因：滾動方向不代表這個元素目前位在 viewport 的上方或下方
+          </Text>
+        </List.Item>
+        <List.Item>
+          <Text>
+            問題範例：當元素已從下方離開，但使用者又短暫往上滾動時，依
+            <Code>isDown()</Code> 判斷出的
+            <Code>enterOffset</Code> 可能會和期待的淡入方向相反
+          </Text>
+        </List.Item>
+        <List.Item>
+          <Text>
+            最終設定：
+            <Code>
+              entry.boundingClientRect.top + entry.boundingClientRect.height / 2
+            </Code>
+          </Text>
+        </List.Item>
+        <List.Item>
+          調整說明：計算元素位置、和畫面中心點進行比較，根據元素在畫面的上/下半部，計算
+          offset 從上/下方進行偏移，讓淡入方向跟元素實際位置一致
         </List.Item>
       </List.Root>
     </Box>
