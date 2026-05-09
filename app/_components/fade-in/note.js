@@ -27,7 +27,7 @@ export default function Note() {
       <Portal>
         <Popover.Positioner>
           <Popover.Content w="600px" h="700px" p="10px">
-            <Popover.Body overflow="auto">
+            <Popover.Body overflow="auto" overscrollBehaviorY="contain">
               <Box display="flex" flexDir="column" gap="16px">
                 <ContentOne />
                 <ContentTwo />

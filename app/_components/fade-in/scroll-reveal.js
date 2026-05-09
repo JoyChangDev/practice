@@ -3,12 +3,12 @@ import { Box } from "@chakra-ui/react";
 import { useCallback, useState } from "react";
 import { useInView } from "react-intersection-observer";
 
-const DEFAULT_OFFSET = 30;
+const DEFAULT_OFFSET = 50;
 
 export default function ScrollReveal({
   children,
   offset = DEFAULT_OFFSET,
-  threshold = 0.4,
+  threshold = 0.8,
   triggerOnce = false,
 }) {
   const safeOffset = Number.isFinite(offset)
