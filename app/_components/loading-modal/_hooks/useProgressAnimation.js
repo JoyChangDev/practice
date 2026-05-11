@@ -119,14 +119,26 @@ export default function useProgressAnimation({
   // Handle external completion
   useEffect(() => {
     if (isComplete && isAnimating) {
-      handleComplete(); // TODO:
+      const animationFrame = requestAnimationFrame(() => {
+        handleComplete();
+      });
+
+      return () => {
+        cancelAnimationFrame(animationFrame);
+      };
     }
   }, [isComplete, isAnimating, handleComplete]);
 
   // Auto-start
   useEffect(() => {
     if (autoStart && progress < 1 && !isAnimating && !isComplete) {
-      handleStart(); // TODO:
+      const animationFrame = requestAnimationFrame(() => {
+        handleStart();
+      });
+
+      return () => {
+        cancelAnimationFrame(animationFrame);
+      };
     }
   }, [autoStart, progress, isAnimating, isComplete, handleStart]);
 

@@ -1,22 +1,31 @@
-'use client';
+"use client";
 
-import { Flex, Icon, Image, Separator, Text } from '@chakra-ui/react';
-import { keyframes } from '@emotion/react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Flex,
+  Icon,
+  Box,
+  Image,
+  Separator,
+  Text,
+  Stack,
+  Center,
+} from "@chakra-ui/react";
+import { keyframes } from "@emotion/react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import useTimeout from '@/hooks/useTimeout';
-import useWebVitalsHandler from '@/hooks/useWebVitalsHandler';
+import useTimeout from "@/hooks/useTimeout";
+import useWebVitalsHandler from "@/hooks/useWebVitalsHandler";
 
-import CustomModal from '../custom-modal';
+import CustomModal from "./custom-modal";
 
-import useProgressAnimation from './_hooks/useProgressAnimation';
-import logoLoadingGif from './assets/cola-logo-loading.gif';
-import IconPlane from './assets/plane.svg';
+import useProgressAnimation from "./_hooks/useProgressAnimation";
+import logoLoadingGif from "./assets/cola-logo-loading.gif";
+import IconPlane from "./assets/plane.svg";
 
 // Progress Configuration
 const INITIAL_PROGRESS = 0.3;
 const RESET_PROGRESS = 0.05;
-const DOCUMENT_COMPLETE_READY_STATE = 'complete';
+const DOCUMENT_COMPLETE_READY_STATE = "complete";
 
 // Animation Timing (in milliseconds)
 const PROGRESS_TRANSITION = 300;
@@ -24,7 +33,7 @@ const MODAL_CLOSE = PROGRESS_TRANSITION + 100; // Must be longer than progress t
 const FCP_FALLBACK_TIMEOUT = 700; // 200ms after CSS animation (500ms)
 const SHOW_LONG_LOADING_MESSAGE_TIMEOUT = 15000; // 15 seconds
 
-const ICON_SIZES = { base: '30px', xl: '40px' };
+const ICON_SIZES = { base: "30px", md: "40px" };
 
 // CSS Keyframe Animations
 const progressKeyframes = keyframes`
@@ -40,21 +49,24 @@ const shrinkKeyframes = keyframes`
 // Calculate progress bar and icon positioning
 const calculateProgressPosition = (fcpReceived, progress) => {
   if (!fcpReceived) {
-    return { progressIconLeft: '0%', progressBarWidth: '90%' };
+    return { progressIconLeft: "0%", progressBarWidth: "90%" };
   }
 
-  const { base: baseIconSize, xl: xlIconSize } = ICON_SIZES;
+  const { base: baseIconSize, md: xlIconSize } = ICON_SIZES;
 
-  const minPosition = (progress < INITIAL_PROGRESS ? RESET_PROGRESS : INITIAL_PROGRESS) * 100;
+  const minPosition =
+    (progress < INITIAL_PROGRESS ? RESET_PROGRESS : INITIAL_PROGRESS) * 100;
   const iconLeftCalc = (size) =>
     `clamp(${minPosition}%, calc(${progress * 100}% - ${size}), calc(100% - ${size}))`;
 
   const iconLeft = {
     base: iconLeftCalc(baseIconSize),
-    xl: iconLeftCalc(xlIconSize),
+    md: iconLeftCalc(xlIconSize),
   };
   const maxWidthConstraint =
-    progress < 0.3 ? `${100 - minPosition}%` : `calc(${100 - minPosition}% - 20px)`;
+    progress < 0.3
+      ? `${100 - minPosition}%`
+      : `calc(${100 - minPosition}% - 20px)`;
   const barWidth = `min(calc(100% -  ${progress * 100}%), ${maxWidthConstraint})`;
 
   return {
@@ -65,18 +77,15 @@ const calculateProgressPosition = (fcpReceived, progress) => {
 
 // Render modal content section
 const renderContent = (status, details, disclaimer, isLongLoading) => (
-  <Flex
-    w="100%"
-    px={{ base: '24px', xl: '40px' }}
-    gap="8px"
-    textAlign="center"
-    flexDir="column"
-    alignItems="center"
-  >
-    <Image src={logoLoadingGif.src} alt="logo-loading-gif" w={{ base: '100px', xl: '200px' }} />
+  <Center w="100%" px={{ base: "24px", md: "40px" }} gap="8px" flexDir="column">
+    <Image
+      src={logoLoadingGif.src}
+      alt="logo-loading-gif"
+      w={{ base: "100px", md: "200px" }}
+    />
     <Text
       color="#454545"
-      fontSize={{ base: '16px', xl: '24px' }}
+      fontSize={{ base: "16px", md: "24px" }}
       fontWeight={700}
       lineHeight={1.2}
       whiteSpace="pre-line"
@@ -88,7 +97,7 @@ const renderContent = (status, details, disclaimer, isLongLoading) => (
       <>
         <Text
           color="#3d3d3d"
-          fontSize={{ base: '12px', xl: '14px' }}
+          fontSize={{ base: "12px", md: "14px" }}
           fontWeight={400}
           whiteSpace="pre-line"
           lineHeight={1.2}
@@ -96,27 +105,45 @@ const renderContent = (status, details, disclaimer, isLongLoading) => (
           {details}
         </Text>
 
-        <Separator w="100%" h="1px" bg="#e7e7e7" my={{ base: '8px', xl: '16px' }} />
+        <Separator
+          w="100%"
+          h="1px"
+          bg="#e7e7e7"
+          my={{ base: "8px", md: "16px" }}
+        />
       </>
     )}
 
     {!!disclaimer && (
-      <Text color="#3d3d3d" fontSize={{ base: '12px', xl: '14px' }} fontWeight={400}>
+      <Text
+        color="#3d3d3d"
+        fontSize={{ base: "12px", md: "14px" }}
+        fontWeight={400}
+      >
         {disclaimer}
       </Text>
     )}
 
     {!!isLongLoading && (
-      <Text color="#3d3d3d" fontSize={{ base: '12px', xl: '14px' }} fontWeight={400}>
+      <Text
+        color="#3d3d3d"
+        fontSize={{ base: "12px", md: "14px" }}
+        fontWeight={400}
+      >
         系統正在進行作業中，可能需要1-3分鐘，請勿關閉頁面。
       </Text>
     )}
-  </Flex>
+  </Center>
 );
 
 // Render progress bar section
 const renderProgressBar = (progressBarWidth, progressIconLeft, fcpReceived) => (
-  <Flex w="100%" h={{ base: '20px', xl: '40px' }} pos="relative" alignItems="center">
+  <Flex
+    w="100%"
+    h={{ base: "20px", md: "40px" }}
+    pos="relative"
+    alignItems="center"
+  >
     <Flex
       w="100%"
       h="4px"
@@ -140,7 +167,9 @@ const renderProgressBar = (progressBarWidth, progressIconLeft, fcpReceived) => (
       zIndex={1}
       w={progressBarWidth}
       animation={
-        fcpReceived ? undefined : `${shrinkKeyframes} 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards`
+        fcpReceived
+          ? undefined
+          : `${shrinkKeyframes} 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards`
       }
     />
 
@@ -155,7 +184,9 @@ const renderProgressBar = (progressBarWidth, progressIconLeft, fcpReceived) => (
       zIndex={3}
       left={progressIconLeft}
       animation={
-        fcpReceived ? undefined : `${progressKeyframes} 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards`
+        fcpReceived
+          ? undefined
+          : `${progressKeyframes} 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards`
       }
     >
       <IconPlane />
@@ -179,7 +210,7 @@ const renderProgressBar = (progressBarWidth, progressIconLeft, fcpReceived) => (
  *   - false: Waits for parent to set true
  * @returns {JSX.Element} Modal with animated progress bar and customizable content
  */
-export default function ProgressModal({
+export default function LoadingModal({
   status,
   details,
   disclaimer,
@@ -205,17 +236,19 @@ export default function ProgressModal({
     setTimeoutSafe(() => setInternalOpen(false), MODAL_CLOSE);
   }, [clearTimeoutSafe, setTimeoutSafe]);
 
-  const { progress, isAnimating, handleStart, handleReset, handleComplete } = useProgressAnimation({
-    autoStart: shouldAutoStart,
-    isComplete,
-    onComplete: handleCloseModal,
-    initialProgress: INITIAL_PROGRESS,
-  });
+  const { progress, isAnimating, handleStart, handleReset, handleComplete } =
+    useProgressAnimation({
+      autoStart: shouldAutoStart,
+      isComplete,
+      onComplete: () => null,
+      onComplete: handleCloseModal,
+      initialProgress: INITIAL_PROGRESS,
+    });
 
   const shouldListen = useMemo(
     () =>
       !(
-        ((typeof document !== 'undefined' &&
+        ((typeof document !== "undefined" &&
           document.readyState === DOCUMENT_COMPLETE_READY_STATE) ||
           fcpReceived) &&
         progress >= 1
@@ -296,32 +329,11 @@ export default function ProgressModal({
   }, [open]);
 
   return (
-    <CustomModal
-      modal
-      open={open}
-      onClose={handleNoopClose}
-      headerProps={{ display: 'none' }}
-      closeTriggerProps={{ display: 'none' }}
-      contentProps={{
-        w: { base: '280px', xl: '500px' },
-        bg: '#fff',
-        rounded: '8px',
-      }}
-      bodyProps={{
-        px: '0px',
-        pt: { base: '16px', xl: '32px' },
-        pb: { base: '16px', xl: '40px' },
-        gap: { base: '16px', xl: '24px' },
-        display: 'flex',
-        flexDir: 'column',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        fontFamily: 'Noto Sans TC',
-      }}
-      backdropProps={{ bg: 'rgba(0, 0, 0, 0.5)' }}
-    >
-      {renderContent(status, details, disclaimer, isLongLoading)}
-      {renderProgressBar(progressBarWidth, progressIconLeft, fcpReceived)}
+    <CustomModal open={open} onOpenChange={null}>
+      <Stack w="100%" p="20px">
+        {renderContent(status, details, disclaimer, isLongLoading)}
+        {renderProgressBar(progressBarWidth, progressIconLeft, fcpReceived)}
+      </Stack>
     </CustomModal>
   );
 }
