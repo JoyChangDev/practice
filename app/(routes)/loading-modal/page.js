@@ -15,7 +15,6 @@ import { useEffect, useRef, useState } from "react";
 import LoadingModal from "@/components/loading-modal";
 
 const LOADING_DURATION = 3000;
-const MODAL_UNMOUNT_DELAY = 700;
 
 export default function Page() {
   const [modalKey, setModalKey] = useState(0);
@@ -24,11 +23,9 @@ export default function Page() {
   const [isComplete, setIsComplete] = useState(false);
 
   const loadingTimerRef = useRef(null);
-  const unmountTimerRef = useRef(null);
 
   const handleOpenLoading = () => {
     window.clearTimeout(loadingTimerRef.current);
-    window.clearTimeout(unmountTimerRef.current);
 
     setModalKey((current) => current + 1);
     setIsComplete(false);
@@ -36,20 +33,10 @@ export default function Page() {
 
     loadingTimerRef.current = window.setTimeout(() => {
       setIsComplete(true);
-
-      unmountTimerRef.current = window.setTimeout(() => {
-        setOpenModal(false);
-      }, MODAL_UNMOUNT_DELAY);
     }, LOADING_DURATION);
   };
 
-  useEffect(
-    () => () => {
-      window.clearTimeout(loadingTimerRef.current);
-      window.clearTimeout(unmountTimerRef.current);
-    },
-    [],
-  );
+  useEffect(() => () => window.clearTimeout(loadingTimerRef.current), []);
 
   return (
     <Center minH="100dvh" px="20px" bg="#f7fafc">
@@ -96,7 +83,8 @@ export default function Page() {
         status="資料處理中"
         details="正在模擬 API 請求，完成後燈箱會自動關閉。"
         disclaimer="請稍候，不需要手動關閉此視窗"
-        isComplete={isComplete}
+        complete={isComplete}
+        onClose={() => setOpenModal(false)}
       />
     </Center>
   );

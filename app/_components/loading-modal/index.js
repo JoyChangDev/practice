@@ -58,61 +58,56 @@ const calculateProgressPosition = (fcpReceived, progress) => {
 };
 
 /**
- * Progress modal component that displays loading animation with customizable content
- * Automatically handles progress animation, web vitals monitoring, and modal lifecycle
+ * Loading modal with animated progress bar.
+ * Open/close state is fully controlled by the parent.
+ * FCP detection and progress animation are managed internally.
  *
- * @param {Object} props - Component props
- * @param {string} props.status - Main loading message displayed prominently
- * @param {string} [props.details] - Optional additional details text
- * @param {string} [props.disclaimer] - Optional disclaimer text shown at bottom
- * @param {boolean} [props.isComplete] - External completion signal to close modal
- * @param {boolean} [props.open] - External control for modal open state (if undefined, uses internal state)
- * @param {boolean} [props.shouldStart] - Manual control to start progress animation
- *   - undefined: Auto-starts immediately (default behavior)
- *   - true: Waits for parent to set true, then starts
- *   - false: Waits for parent to set true
- * @returns {JSX.Element} Modal with animated progress bar and customizable content
+ * @param {Object} props
+ * @param {string} props.status - Main loading message
+ * @param {string} [props.details] - Optional detail text
+ * @param {string} [props.disclaimer] - Optional disclaimer text
+ * @param {boolean} props.open - Whether the modal is open
+ * @param {boolean} [props.complete] - Signal that the operation is done; triggers animation completion and onClose
+ * @param {Function} [props.onClose] - Called after the closing animation finishes
  */
 export default function LoadingModal({
   status,
   details,
   disclaimer,
-  isComplete,
-  open: externalOpen,
-  shouldStart,
+  open,
+  complete,
+  onClose,
 }) {
-  const shouldAutoStart = shouldStart === undefined;
-  const [internalOpen, setInternalOpen] = useState(shouldAutoStart);
-  const open = externalOpen ?? internalOpen;
-
   const [isLongLoading, setIsLongLoading] = useState(false);
 
   const { setTimeoutSafe, clearTimeoutSafe } = useTimeout();
 
-  const handleNoopClose = useCallback(() => {
-    // Modal should not be closed by user interaction
-  }, []);
-
-  const handleCloseModal = useCallback(() => {
+  const closeModal = useCallback(() => {
     clearTimeoutSafe();
-    setTimeoutSafe(() => setInternalOpen(false), MODAL_CLOSE);
-  }, [clearTimeoutSafe, setTimeoutSafe]);
+    setTimeoutSafe(() => onClose?.(), MODAL_CLOSE);
+  }, [clearTimeoutSafe, setTimeoutSafe, onClose]);
 
-  const { progress, isAnimating, handleStart, handleReset, handleComplete } =
+  const { progress, handleStart, handleReset, handleComplete } =
     useProgressAnimation({
-      autoStart: shouldAutoStart,
-      isComplete,
-
-      onComplete: handleCloseModal,
+      autoStart: false,
+      isComplete: complete,
+      onComplete: closeModal,
       initialProgress: INITIAL_PROGRESS,
     });
 
   const { fcpReceived, isHydrated } = useFcpDetection();
 
+  // Start animation when modal opens; reset when it closes so next open starts fresh
   useEffect(() => {
-    if (!isHydrated || isComplete !== undefined) return;
+    if (open) handleStart();
+    else handleReset(RESET_PROGRESS);
+  }, [open, handleStart, handleReset]);
+
+  // When hydration fires and complete is not externally controlled, close the modal
+  useEffect(() => {
+    if (!isHydrated || complete !== undefined) return;
     handleComplete();
-    handleCloseModal();
+    closeModal();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHydrated]);
 
@@ -121,32 +116,9 @@ export default function LoadingModal({
     [fcpReceived, progress],
   );
 
-  // Manually start progress animation when shouldStart prop becomes true
-  useEffect(() => {
-    if (shouldStart === undefined) return;
-
-    if (shouldStart && !isComplete && !isAnimating) {
-      setInternalOpen(true);
-      handleStart();
-    }
-  }, [shouldStart, isComplete, isAnimating, handleStart]);
-
-  // restart the loading after first load finished
-  useEffect(() => {
-    if (isComplete === undefined) return;
-
-    if (shouldStart === undefined && !isComplete && !open && !isAnimating) {
-      setInternalOpen(true);
-      handleReset(RESET_PROGRESS);
-    }
-  }, [isAnimating, isComplete, open, handleReset, shouldStart]);
-
   // Timer to show long loading message after 15 seconds
   useEffect(() => {
-    if (!open) {
-      setIsLongLoading(false);
-      return;
-    }
+    if (!open) return setIsLongLoading(false);
 
     const timer = setTimeout(() => {
       setIsLongLoading(true);
