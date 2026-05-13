@@ -1,7 +1,7 @@
 "use client";
 
 import { Center, Image } from "@chakra-ui/react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import useTimeout from "@/hooks/useTimeout";
 import CustomModal from "./custom-modal";
@@ -16,46 +16,13 @@ import {
   Disclaimer,
   LongLoading,
   ProgressBar,
+  PROGRESS_TRANSITION,
 } from "./component";
 
-// Progress Configuration
-const INITIAL_PROGRESS = 0.3;
+// Must match RESET_PROGRESS and INITIAL_PROGRESS in component.js calculateProgressPosition
 const RESET_PROGRESS = 0.05;
-// Animation Timing (in milliseconds)
-const PROGRESS_TRANSITION = 300;
-const MODAL_CLOSE = PROGRESS_TRANSITION + 100; // Must be longer than progress transition
-const SHOW_LONG_LOADING_MESSAGE_TIMEOUT = 15000; // 15 seconds
-
-const ICON_SIZES = { base: "30px", md: "40px" };
-
-// Calculate progress bar and icon positioning
-const calculateProgressPosition = (fcpReceived, progress) => {
-  if (!fcpReceived) {
-    return { progressIconLeft: "0%", progressBarWidth: "90%" };
-  }
-
-  const { base: baseIconSize, md: xlIconSize } = ICON_SIZES;
-
-  const minPosition =
-    (progress < INITIAL_PROGRESS ? RESET_PROGRESS : INITIAL_PROGRESS) * 100;
-  const iconLeftCalc = (size) =>
-    `clamp(${minPosition}%, calc(${progress * 100}% - ${size}), calc(100% - ${size}))`;
-
-  const iconLeft = {
-    base: iconLeftCalc(baseIconSize),
-    md: iconLeftCalc(xlIconSize),
-  };
-  const maxWidthConstraint =
-    progress < 0.3
-      ? `${100 - minPosition}%`
-      : `calc(${100 - minPosition}% - 20px)`;
-  const barWidth = `min(calc(100% -  ${progress * 100}%), ${maxWidthConstraint})`;
-
-  return {
-    progressIconLeft: iconLeft,
-    progressBarWidth: barWidth,
-  };
-};
+const MODAL_CLOSE_BUFFER = 100; // ms after progress transition before onClose fires
+const LONG_LOADING_TIMEOUT = 15000; // 15 seconds
 
 /**
  * Loading modal with animated progress bar.
@@ -80,28 +47,33 @@ export default function LoadingModal({
 }) {
   const [isLongLoading, setIsLongLoading] = useState(false);
 
-  const { setTimeoutSafe, clearTimeoutSafe } = useTimeout();
-
-  const closeModal = useCallback(() => {
-    clearTimeoutSafe();
-    setTimeoutSafe(() => onClose?.(), MODAL_CLOSE);
-  }, [clearTimeoutSafe, setTimeoutSafe, onClose]);
-
-  const { progress, handleStart, handleReset, handleComplete } =
-    useProgressAnimation({
-      autoStart: false,
-      isComplete: complete,
-      onComplete: closeModal,
-      initialProgress: RESET_PROGRESS,
-    });
+  const { setSafeTimeout, clearSafeTimeout } = useTimeout();
 
   const { fcpReceived, isHydrated } = useFcpDetection();
+
+  const { progress, isAnimating, handleStart, handleReset, handleComplete } =
+    useProgressAnimation();
+
+  const closeModal = useCallback(() => {
+    clearSafeTimeout();
+    setSafeTimeout(() => onClose?.(), PROGRESS_TRANSITION + MODAL_CLOSE_BUFFER);
+  }, [clearSafeTimeout, setSafeTimeout, onClose]);
 
   // Start animation when modal opens; reset when it closes so next open starts fresh
   useEffect(() => {
     if (open) handleStart(RESET_PROGRESS);
     else handleReset(RESET_PROGRESS);
   }, [open, handleStart, handleReset]);
+
+  // When complete signals done, finish animation then close
+  useEffect(() => {
+    if (!complete || !isAnimating) return;
+    const frame = requestAnimationFrame(() => {
+      handleComplete();
+      closeModal();
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [complete, isAnimating, handleComplete, closeModal, setSafeTimeout]);
 
   // When hydration fires and complete is not externally controlled, close the modal
   useEffect(() => {
@@ -111,22 +83,16 @@ export default function LoadingModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHydrated]);
 
-  const { progressIconLeft, progressBarWidth } = useMemo(
-    () => calculateProgressPosition(fcpReceived, progress),
-    [fcpReceived, progress],
-  );
-
   // Timer to show long loading message after 15 seconds
   useEffect(() => {
     if (!open) return setIsLongLoading(false);
 
-    const timer = setTimeout(() => {
-      setIsLongLoading(true);
-    }, SHOW_LONG_LOADING_MESSAGE_TIMEOUT);
+    const timer = setTimeout(
+      () => setIsLongLoading(true),
+      LONG_LOADING_TIMEOUT,
+    );
 
-    return () => {
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, [open]);
 
   return (
@@ -142,11 +108,7 @@ export default function LoadingModal({
         <Disclaimer>{disclaimer}</Disclaimer>
         {!!isLongLoading && <LongLoading />}
       </Center>
-      <ProgressBar
-        barWidth={progressBarWidth}
-        iconLeft={progressIconLeft}
-        fcpReceived={fcpReceived}
-      />
+      <ProgressBar fcpReceived={fcpReceived} progress={progress} />
     </CustomModal>
   );
 }

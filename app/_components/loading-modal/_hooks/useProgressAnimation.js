@@ -33,37 +33,13 @@ const getPhaseConfig = (progress) => {
  * Progress animation hook - simple and focused
  * Extracts animation logic from ProgressModal component
  *
- * @param {Object} options - Configuration options
- * @param {boolean} options.isComplete - External completion signal
- * @param {Object} options.config - Animation configuration (optional)
- * @param {Function} options.onComplete - Completion callback
- * @param {boolean} options.autoStart - Whether to start animation immediately
- * @param {number} options.initialProgress - Starting progress value
  * @returns {Object} { progress, isAnimating, handleStart, handleStop, handleReset, handleComplete }
- * @returns {number} progress - Current progress value (0-1)
- * @returns {boolean} isAnimating - Whether animation is currently running
- * @returns {Function} handleStart - Start the animation
- * @returns {Function} handleStop - Stop the animation
- * @returns {Function} handleReset - Reset progress (optionally to specific value)
- * @returns {Function} handleComplete - Complete animation immediately
  */
-export default function useProgressAnimation({
-  isComplete = false,
-  config = PROGRESS_CONFIG,
-  onComplete = null,
-  autoStart,
-  initialProgress = 0.05,
-}) {
-  const [progress, setProgress] = useState(initialProgress);
+export default function useProgressAnimation() {
+  const [progress, setProgress] = useState(0.05);
   const [isAnimating, setIsAnimating] = useState(false);
 
   const intervalRef = useRef(null);
-  const onCompleteRef = useRef(onComplete);
-
-  // Update callback ref when prop changes
-  useEffect(() => {
-    onCompleteRef.current = onComplete;
-  }, [onComplete]);
 
   const tick = useCallback(() => {
     setProgress((prevProgress) => {
@@ -71,16 +47,7 @@ export default function useProgressAnimation({
 
       const { increment, target } = getPhaseConfig(prevProgress);
 
-      const newProgress = Math.min(prevProgress + increment, target);
-
-      if (newProgress >= 1) {
-        requestAnimationFrame(() => {
-          setIsAnimating(false);
-          onCompleteRef.current?.();
-        });
-      }
-
-      return newProgress;
+      return Math.min(prevProgress + increment, target);
     });
   }, []);
 
@@ -89,9 +56,9 @@ export default function useProgressAnimation({
       if (intervalRef.current) return; // Already running
       setProgress(progress);
       setIsAnimating(true);
-      intervalRef.current = setInterval(tick, config.interval);
+      intervalRef.current = setInterval(tick, PROGRESS_CONFIG.interval);
     },
-    [tick, config.interval],
+    [tick],
   );
 
   const handleStop = useCallback(() => {
@@ -103,34 +70,17 @@ export default function useProgressAnimation({
   }, []);
 
   const handleReset = useCallback(
-    (resetValue = initialProgress) => {
+    (progress) => {
       handleStop();
-      setProgress(resetValue);
+      setProgress(progress);
     },
-    [handleStop, initialProgress],
+    [handleStop],
   );
 
   const handleComplete = useCallback(() => {
     handleStop();
     setProgress(1);
-    requestAnimationFrame(() => onCompleteRef.current?.());
   }, [handleStop]);
-
-  // Handle external completion
-  useEffect(() => {
-    if (isComplete && isAnimating) {
-      const animationFrame = requestAnimationFrame(() => handleComplete());
-      return () => cancelAnimationFrame(animationFrame);
-    }
-  }, [isComplete, isAnimating, handleComplete]);
-
-  // Auto-start
-  useEffect(() => {
-    if (autoStart && progress < 1 && !isAnimating && !isComplete) {
-      const animationFrame = requestAnimationFrame(() => handleStart());
-      return () => cancelAnimationFrame(animationFrame);
-    }
-  }, [autoStart, progress, isAnimating, isComplete, handleStart]);
 
   useEffect(
     () => () => {

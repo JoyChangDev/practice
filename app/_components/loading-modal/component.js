@@ -75,14 +75,52 @@ const shrinkKeyframes = keyframes`
   100% { width: calc(70% - 20px) }
 `;
 
-const ProgressBar = ({ barWidth, iconLeft, fcpReceived }) => {
-  const PROGRESS_TRANSITION = 300;
+export const PROGRESS_TRANSITION = 300;
+
+// Must match RESET_PROGRESS and INITIAL_PROGRESS in useProgressAnimation config
+const RESET_PROGRESS = 0.05;
+const INITIAL_PROGRESS = 0.3;
+const ICON_SIZES = { base: "30px", md: "40px" };
+
+const calculateProgressPosition = (fcpReceived, progress) => {
+  if (!fcpReceived) return { iconLeft: "0%", barWidth: "90%" };
+
+  const { base: mobileSize, md: desktopSize } = ICON_SIZES;
+
+  const minPosition =
+    (progress < INITIAL_PROGRESS ? RESET_PROGRESS : INITIAL_PROGRESS) * 100;
+  const iconLeftCalc = (size) =>
+    `clamp(${minPosition}%, calc(${progress * 100}% - ${size}), calc(100% - ${size}))`;
+
+  const iconLeft = {
+    base: iconLeftCalc(mobileSize),
+    md: iconLeftCalc(desktopSize),
+  };
+  const maxWidthConstraint =
+    progress < 0.3
+      ? `${100 - minPosition}%`
+      : `calc(${100 - minPosition}% - 20px)`;
+  const barWidth = `min(calc(100% -  ${progress * 100}%), ${maxWidthConstraint})`;
+
+  return {
+    iconLeft: iconLeft,
+    barWidth: barWidth,
+  };
+};
+
+const ProgressBar = ({ fcpReceived, progress }) => {
+  const { iconLeft, barWidth } = calculateProgressPosition(
+    fcpReceived,
+    progress,
+  );
+
   const barAnimation = fcpReceived
     ? undefined
     : `${shrinkKeyframes} 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards`;
   const iconAnimation = fcpReceived
     ? undefined
     : `${progressKeyframes} 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards`;
+
   return (
     <Flex
       w="100%"
