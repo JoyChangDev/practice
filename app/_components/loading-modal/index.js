@@ -92,14 +92,14 @@ export default function LoadingModal({
       autoStart: false,
       isComplete: complete,
       onComplete: closeModal,
-      initialProgress: INITIAL_PROGRESS,
+      initialProgress: RESET_PROGRESS,
     });
 
   const { fcpReceived, isHydrated } = useFcpDetection();
 
   // Start animation when modal opens; reset when it closes so next open starts fresh
   useEffect(() => {
-    if (open) handleStart();
+    if (open) handleStart(RESET_PROGRESS);
     else handleReset(RESET_PROGRESS);
   }, [open, handleStart, handleReset]);
 

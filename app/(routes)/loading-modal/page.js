@@ -17,22 +17,18 @@ import LoadingModal from "@/components/loading-modal";
 const LOADING_DURATION = 3000;
 
 export default function Page() {
-  const [modalKey, setModalKey] = useState(0);
-
   const [modalOpen, setOpenModal] = useState(false);
-  const [isComplete, setIsComplete] = useState(false);
+  const [modalComplete, setModalComplete] = useState(undefined);
 
   const loadingTimerRef = useRef(null);
 
   const handleOpenLoading = () => {
     window.clearTimeout(loadingTimerRef.current);
-
-    setModalKey((current) => current + 1);
-    setIsComplete(false);
+    setModalComplete(false);
     setOpenModal(true);
 
     loadingTimerRef.current = window.setTimeout(() => {
-      setIsComplete(true);
+      setModalComplete(true);
     }, LOADING_DURATION);
   };
 
@@ -70,7 +66,6 @@ export default function Page() {
             ml="auto"
             colorPalette="cyan"
             onClick={handleOpenLoading}
-            disabled={modalOpen}
           >
             OPEN
           </Button>
@@ -78,13 +73,12 @@ export default function Page() {
       </Card.Root>
 
       <LoadingModal
-        key={modalKey}
         open={modalOpen}
+        complete={modalComplete}
+        onClose={() => setOpenModal(false)}
         status="資料處理中"
         details="正在模擬 API 請求，完成後燈箱會自動關閉。"
         disclaimer="請稍候，不需要手動關閉此視窗"
-        complete={isComplete}
-        onClose={() => setOpenModal(false)}
       />
     </Center>
   );

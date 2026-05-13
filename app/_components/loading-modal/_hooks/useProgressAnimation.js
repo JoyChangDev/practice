@@ -67,9 +67,7 @@ export default function useProgressAnimation({
 
   const tick = useCallback(() => {
     setProgress((prevProgress) => {
-      if (prevProgress >= 1) {
-        return prevProgress;
-      }
+      if (prevProgress >= 1) return prevProgress;
 
       const { increment, target } = getPhaseConfig(prevProgress);
 
@@ -86,13 +84,15 @@ export default function useProgressAnimation({
     });
   }, []);
 
-  const handleStart = useCallback(() => {
-    if (intervalRef.current) {
-      return; // Already running
-    }
-    setIsAnimating(true);
-    intervalRef.current = setInterval(tick, config.interval);
-  }, [tick, config.interval]);
+  const handleStart = useCallback(
+    (progress) => {
+      if (intervalRef.current) return; // Already running
+      setProgress(progress);
+      setIsAnimating(true);
+      intervalRef.current = setInterval(tick, config.interval);
+    },
+    [tick, config.interval],
+  );
 
   const handleStop = useCallback(() => {
     if (intervalRef.current) {
@@ -119,26 +119,16 @@ export default function useProgressAnimation({
   // Handle external completion
   useEffect(() => {
     if (isComplete && isAnimating) {
-      const animationFrame = requestAnimationFrame(() => {
-        handleComplete();
-      });
-
-      return () => {
-        cancelAnimationFrame(animationFrame);
-      };
+      const animationFrame = requestAnimationFrame(() => handleComplete());
+      return () => cancelAnimationFrame(animationFrame);
     }
   }, [isComplete, isAnimating, handleComplete]);
 
   // Auto-start
   useEffect(() => {
     if (autoStart && progress < 1 && !isAnimating && !isComplete) {
-      const animationFrame = requestAnimationFrame(() => {
-        handleStart();
-      });
-
-      return () => {
-        cancelAnimationFrame(animationFrame);
-      };
+      const animationFrame = requestAnimationFrame(() => handleStart());
+      return () => cancelAnimationFrame(animationFrame);
     }
   }, [autoStart, progress, isAnimating, isComplete, handleStart]);
 
