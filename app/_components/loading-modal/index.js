@@ -4,11 +4,10 @@ import { Center, Image } from "@chakra-ui/react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import useTimeout from "@/hooks/useTimeout";
-import useWebVitalsHandler from "@/hooks/useWebVitalsHandler";
-
 import CustomModal from "./custom-modal";
 
 import useProgressAnimation from "./_hooks/useProgressAnimation";
+import useFcpDetection from "./_hooks/useFcpDetection";
 import logoLoadingGif from "./assets/cola-logo-loading.gif";
 
 import {
@@ -22,12 +21,9 @@ import {
 // Progress Configuration
 const INITIAL_PROGRESS = 0.3;
 const RESET_PROGRESS = 0.05;
-const DOCUMENT_COMPLETE_READY_STATE = "complete";
-
 // Animation Timing (in milliseconds)
 const PROGRESS_TRANSITION = 300;
 const MODAL_CLOSE = PROGRESS_TRANSITION + 100; // Must be longer than progress transition
-const FCP_FALLBACK_TIMEOUT = 700; // 200ms after CSS animation (500ms)
 const SHOW_LONG_LOADING_MESSAGE_TIMEOUT = 15000; // 15 seconds
 
 const ICON_SIZES = { base: "30px", md: "40px" };
@@ -89,7 +85,6 @@ export default function LoadingModal({
   const [internalOpen, setInternalOpen] = useState(shouldAutoStart);
   const open = externalOpen ?? internalOpen;
 
-  const [fcpReceived, setFcpReceived] = useState(false);
   const [isLongLoading, setIsLongLoading] = useState(false);
 
   const { setTimeoutSafe, clearTimeoutSafe } = useTimeout();
@@ -112,52 +107,19 @@ export default function LoadingModal({
       initialProgress: INITIAL_PROGRESS,
     });
 
-  const shouldListen = useMemo(
-    () =>
-      !(
-        ((typeof document !== "undefined" &&
-          document.readyState === DOCUMENT_COMPLETE_READY_STATE) ||
-          fcpReceived) &&
-        progress >= 1
-      ),
-    [fcpReceived, progress],
-  );
+  const { fcpReceived, isHydrated } = useFcpDetection();
 
-  const handleFCP = useCallback(() => {
-    if (!fcpReceived) {
-      setFcpReceived(true);
-    }
-  }, [fcpReceived]);
-
-  const handleHydration = useCallback(() => {
+  useEffect(() => {
+    if (!isHydrated || isComplete !== undefined) return;
     handleComplete();
     handleCloseModal();
-  }, [handleCloseModal, handleComplete]);
-
-  useWebVitalsHandler({
-    shouldListen,
-    onFCP: handleFCP,
-    onHydration: isComplete === undefined ? handleHydration : undefined,
-  });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isHydrated]);
 
   const { progressIconLeft, progressBarWidth } = useMemo(
     () => calculateProgressPosition(fcpReceived, progress),
     [fcpReceived, progress],
   );
-
-  // Fallback: Force fcpReceived after CSS animation completes
-  useEffect(() => {
-    if (!fcpReceived) {
-      const fallbackTimer = setTimeout(() => {
-        setFcpReceived(true);
-      }, FCP_FALLBACK_TIMEOUT);
-
-      return () => {
-        clearTimeout(fallbackTimer);
-      };
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Manually start progress animation when shouldStart prop becomes true
   useEffect(() => {
