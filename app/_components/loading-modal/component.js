@@ -65,8 +65,9 @@ const LongLoading = ({ show }) => {
 };
 
 const ProgressBar = ({ progress, transitionMs }) => {
-  const iconLeft = `clamp(3%, ${progress * 100}%, 97%)`; // Keep the icon within the left and right bounds of the progress bar
-  const barWidth = `${Math.min((1 - progress) * 100, 97)}%`;
+  // Keep the icon within the left and right bounds of the progress bar
+  const iconLeft = `clamp(3%, ${progress * 100}%, 97%)`;
+  const barWidth = `clamp(3%, ${(1 - progress) * 100}%, 97%)`;
 
   const transition = `all ${transitionMs}ms cubic-bezier(0.4, 0, 0.2, 1)`;
 
