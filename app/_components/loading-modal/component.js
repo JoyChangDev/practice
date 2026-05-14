@@ -1,5 +1,5 @@
 import { Flex, Icon, Separator, Text } from "@chakra-ui/react";
-import { PiPaperPlaneTiltFill } from "react-icons/pi";
+import { PiPaperPlaneRightDuotone } from "react-icons/pi";
 
 const Status = ({ children }) => {
   return (
@@ -108,7 +108,7 @@ const ProgressBar = ({ progress, transitionMs }) => {
         transition={transition}
         zIndex={3}
       >
-        <PiPaperPlaneTiltFill />
+        <PiPaperPlaneRightDuotone />
       </Icon>
     </Flex>
   );
