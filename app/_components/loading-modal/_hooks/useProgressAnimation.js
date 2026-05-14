@@ -2,32 +2,15 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 
-const PROGRESS_CONFIG = {
-  interval: 100,
-  defaultIncrement: 0.0875,
-  phases: {
-    FAST_START: { target: 0.3, increment: 0.0875 },
-    FAST_CONTINUE: { target: 0.55, increment: 0.0875 },
-    SLOW_MOVE: { target: 0.65, increment: 0.001 },
-    SLOW_FINISH: { target: 0.85, increment: 0.01 },
-    VERY_SLOW_FINISH: { target: 0.95, increment: 0.003 },
-  },
-};
-
-const getPhaseConfig = (progress) => {
-  switch (true) {
-    case progress < PROGRESS_CONFIG.phases.FAST_START.target:
-      return PROGRESS_CONFIG.phases.FAST_START;
-    case progress < PROGRESS_CONFIG.phases.FAST_CONTINUE.target:
-      return PROGRESS_CONFIG.phases.FAST_CONTINUE;
-    case progress < PROGRESS_CONFIG.phases.SLOW_MOVE.target:
-      return PROGRESS_CONFIG.phases.SLOW_MOVE;
-    case progress < PROGRESS_CONFIG.phases.SLOW_FINISH.target:
-      return PROGRESS_CONFIG.phases.SLOW_FINISH;
-    default:
-      return PROGRESS_CONFIG.phases.VERY_SLOW_FINISH;
-  }
-};
+const INTERVAL = 100;
+const PHASE = [
+  { target: 0.3, increment: 0.0875 }, // fast start
+  { target: 0.55, increment: 0.0875 }, // fast continue
+  { target: 0.65, increment: 0.0025 }, // slow continue
+  { target: 0.85, increment: 0.01 }, // slow finish
+  { target: 0.95, increment: 0.003 }, // very slow finish
+];
+const getPhase = (progress) => PHASE.find(({ target }) => progress < target);
 
 /**
  * Progress animation hook - simple and focused
@@ -35,19 +18,19 @@ const getPhaseConfig = (progress) => {
  *
  * @returns {Object} { progress, isAnimating, handleStart, handleStop, handleReset, handleComplete }
  */
-export default function useProgressAnimation() {
-  const [progress, setProgress] = useState(0.05);
+export default function useProgressAnimation(initialProgress) {
+  const [progress, setProgress] = useState(initialProgress);
   const [isAnimating, setIsAnimating] = useState(false);
 
   const intervalRef = useRef(null);
 
   const tick = useCallback(() => {
-    setProgress((prevProgress) => {
-      if (prevProgress >= 1) return prevProgress;
+    setProgress((prev) => {
+      if (prev >= 1) return prev;
 
-      const { increment, target } = getPhaseConfig(prevProgress);
+      const { increment, target } = getPhase(prev) ?? PHASE[PHASE.length - 1];
 
-      return Math.min(prevProgress + increment, target);
+      return Math.min(prev + increment, target);
     });
   }, []);
 
@@ -56,7 +39,7 @@ export default function useProgressAnimation() {
       if (intervalRef.current) return; // Already running
       setProgress(progress);
       setIsAnimating(true);
-      intervalRef.current = setInterval(tick, PROGRESS_CONFIG.interval);
+      intervalRef.current = setInterval(tick, INTERVAL);
     },
     [tick],
   );
@@ -95,7 +78,6 @@ export default function useProgressAnimation() {
   return {
     progress,
     isAnimating,
-
     handleStart,
     handleStop,
     handleReset,

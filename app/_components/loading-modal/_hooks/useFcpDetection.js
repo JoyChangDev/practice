@@ -5,8 +5,9 @@ import { useCallback, useEffect, useState } from "react";
 const FCP_FALLBACK_TIMEOUT = 700; // 200ms after CSS animation (500ms)
 
 export default function useFcpDetection() {
-  const [fcpReceived, setFcpReceived] = useState(false);
+  const [fcpReceived, setFcpReceived] = useState(false); // TODO: delete?
   const [isHydrated, setIsHydrated] = useState(false);
+  console.log("[fcpReceived, isHydrated]: ", [fcpReceived, isHydrated]);
 
   const shouldListen = !(fcpReceived && isHydrated);
 

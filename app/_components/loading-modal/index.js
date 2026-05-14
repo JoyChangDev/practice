@@ -16,13 +16,14 @@ import {
   Disclaimer,
   LongLoading,
   ProgressBar,
-  PROGRESS_TRANSITION,
 } from "./component";
 
 // Must match RESET_PROGRESS and INITIAL_PROGRESS in component.js calculateProgressPosition
 const RESET_PROGRESS = 0.05;
 const MODAL_CLOSE_BUFFER = 100; // ms after progress transition before onClose fires
 const LONG_LOADING_TIMEOUT = 15000; // 15 seconds
+
+export const PROGRESS_TRANSITION = 300;
 
 /**
  * Loading modal with animated progress bar.
@@ -49,10 +50,10 @@ export default function LoadingModal({
 
   const { setSafeTimeout, clearSafeTimeout } = useTimeout();
 
-  const { fcpReceived, isHydrated } = useFcpDetection();
+  const { isHydrated } = useFcpDetection();
 
   const { progress, isAnimating, handleStart, handleReset, handleComplete } =
-    useProgressAnimation();
+    useProgressAnimation(RESET_PROGRESS);
 
   const closeModal = useCallback(() => {
     clearSafeTimeout();
@@ -106,9 +107,9 @@ export default function LoadingModal({
         <Status>{status}</Status>
         <Details>{details}</Details>
         <Disclaimer>{disclaimer}</Disclaimer>
-        {!!isLongLoading && <LongLoading />}
+        <LongLoading show={isLongLoading} />
       </Center>
-      <ProgressBar fcpReceived={fcpReceived} progress={progress} />
+      <ProgressBar progress={progress} transitionMs={PROGRESS_TRANSITION} />
     </CustomModal>
   );
 }
